@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Thinking — App SUBE</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --e:#FF6B35;--d:#00C9A7;--i:#FFD60A;--p:#9B8FFF;--t:#34D399;
+  --ink:#0C0F18;--card:#151929;--panel:#1C2135;--dim:#252C42;
+  --white:#EFEFF2;--ghost:#4E566B;--muted:#7A8399;
+  --sc:var(--d);
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);font-family:'Inter',sans-serif}
+#deck{width:100vw;height:100vh;position:relative}
+
+.slide{
+  position:absolute;inset:0;
+  display:grid;grid-template-rows:auto 1fr;
+  padding:4vh 5.5vw 8.5vh;
+  opacity:0;pointer-events:none;background:var(--ink);overflow:hidden;
+}
+.slide.active{opacity:1;pointer-events:all}
+
+/* ── ANIMATIONS ── */
+@keyframes up {from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes in {from{opacity:0}to{opacity:1}}
+@keyframes num{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+@keyframes bar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes wipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+
+.slide.active .a1{animation:up .5s cubic-bezier(.22,1,.36,1) .03s both}
+.slide.active .a2{animation:up .5s cubic-bezier(.22,1,.36,1) .10s both}
+.slide.active .a3{animation:up .5s cubic-bezier(.22,1,.36,1) .17s both}
+.slide.active .a4{animation:up .5s cubic-bezier(.22,1,.36,1) .24s both}
+.slide.active .a5{animation:up .5s cubic-bezier(.22,1,.36,1) .31s both}
+.slide.active .a6{animation:up .5s cubic-bezier(.22,1,.36,1) .38s both}
+.slide.active .ai{animation:in  .7s ease .08s both}
+.slide.active .an{animation:num .6s cubic-bezier(.34,1.56,.64,1) .25s both}
+.slide.active .gr{animation:bar .65s cubic-bezier(.22,1,.36,1) .3s both;transform-origin:left}
+.slide.active .wp{animation:wipe .7s cubic-bezier(.22,1,.36,1) .2s both}
+
+/* ── PROGRESS ── */
+#prog{position:fixed;top:0;left:0;height:2px;background:var(--d);transition:width .4s ease,background .4s;z-index:999}
+
+/* ── NAV ── */
+#nav{
+  position:fixed;bottom:2.2vh;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:12px;
+  background:rgba(12,15,24,.92);backdrop-filter:blur(18px);
+  padding:8px 16px;border-radius:40px;border:1px solid var(--dim);z-index:998;
+}
+#nav button{background:none;border:none;color:var(--white);cursor:pointer;font-size:15px;padding:3px 7px;border-radius:5px;transition:background .15s,transform .1s}
+#nav button:hover{background:var(--panel)}
+#nav button:active{transform:scale(.9)}
+#sn{font-size:11px;color:var(--ghost);min-width:38px;text-align:center;font-variant-numeric:tabular-nums}
+.dots{display:flex;gap:4px}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--ghost);cursor:pointer;transition:all .28s}
+.dot.on{width:16px;border-radius:3px}
+
+/* ── TYPOGRAPHY ── */
+.bb{font-family:'Bebas Neue',sans-serif;letter-spacing:.04em;line-height:.95}
+.fhuge{font-size:clamp(60px,9.5vw,124px)}
+.fxl{font-size:clamp(30px,4.5vw,54px)}
+.flg{font-size:clamp(20px,2.8vw,33px)}
+.fmd{font-size:clamp(13px,1.4vw,17px)}
+.fsm{font-size:clamp(11px,1vw,13px)}
+.fw7{font-weight:700}.fw9{font-weight:900}
+.tw{color:var(--white)}.tg{color:var(--ghost)}.tm{color:var(--muted)}.ts{color:var(--sc)}.tb{color:#0C0F18}.ital{font-style:italic}
+
+/* ── LAYOUT ── */
+.col{display:flex;flex-direction:column;gap:10px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.fill{flex:1}
+
+/* ── COMPONENTS ── */
+.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;background:var(--sc);color:#0C0F18;width:fit-content}
+.card{background:var(--card);border-radius:9px;border:1px solid var(--dim);padding:15px 19px}
+.card.solid{background:var(--sc);border:none}
+.card.ghost{background:var(--panel);border:1px solid var(--dim)}
+.divl{height:2px;background:var(--sc);transform-origin:left;border-radius:1px}
+.quote{border-left:2px solid var(--sc);padding:10px 15px;background:var(--panel);border-radius:0 7px 7px 0}
+.sbl{position:absolute;font-family:'Bebas Neue',sans-serif;color:#ffffff03;pointer-events:none;user-select:none;line-height:1;letter-spacing:.06em;font-size:28vw;top:50%;transform:translateY(-52%);left:0;right:0;text-align:center}
+.tag{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.tech-label{display:flex;align-items:center;gap:9px}
+.tech-num{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--sc);line-height:1;opacity:.3}
+
+/* ── INSIGHT ROW ── */
+.ir{display:flex;border-radius:7px;overflow:hidden;background:var(--panel)}
+.irt{min-width:76px;background:var(--sc);color:#0C0F18;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:8px;text-align:center;line-height:1.3}
+.irb{padding:9px 13px;font-size:12px;color:var(--white);display:flex;align-items:center;line-height:1.5}
+
+/* ── EXPANDABLE ── */
+.expl{display:flex;flex-direction:column;gap:4px}
+.exph{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 15px;background:var(--panel);border:none;cursor:pointer;color:var(--white);font-family:'Inter',sans-serif;font-weight:700;font-size:12px;text-align:left;transition:background .18s;gap:10px;border-radius:7px}
+.exph:hover{background:var(--card)}.exph.on{background:var(--card);color:var(--sc)}
+.expa{font-size:12px;transition:transform .28s;flex-shrink:0;opacity:.4;line-height:1}
+.exph.on .expa{transform:rotate(180deg);opacity:1}
+.expb{max-height:0;overflow:hidden;transition:max-height .36s cubic-bezier(.22,1,.36,1),padding .25s;background:var(--card);padding:0 15px;font-size:12px;color:var(--muted);line-height:1.7;border-radius:0 0 7px 7px}
+.expb.on{max-height:160px;padding:10px 15px}
+
+/* ── POV FORMULA ── */
+.pov{background:var(--sc);color:#0C0F18;padding:17px 22px;border-radius:9px;text-align:center;font-weight:800;font-size:clamp(11px,1.3vw,18px);letter-spacing:.03em}
+
+/* ── FIDELITY ── */
+.fid{display:flex;flex-direction:column;gap:7px;padding:16px;border-radius:9px;border:1.5px solid var(--dim)}
+.fid.on{border-color:var(--sc);background:color-mix(in srgb,var(--sc) 8%,var(--card))}
+
+/* ── MATRIX ── */
+.mx{width:100%;border-collapse:collapse;font-size:11px}
+.mx th{background:var(--sc);color:#0C0F18;padding:6px 11px;text-align:left;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase}
+.mx td{padding:7px 11px;border-bottom:1px solid var(--dim);color:var(--white)}
+.mx tr:nth-child(even) td{background:var(--panel)}
+
+/* ── SUMMARY ── */
+.sr{display:flex;align-items:stretch;border-radius:7px;overflow:hidden}
+.ss{min-width:115px;padding:11px 13px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#0C0F18;display:flex;align-items:center}
+.st{flex:1;padding:11px 15px;background:var(--card);font-weight:700;font-size:13px;color:var(--white);display:flex;align-items:center}
+.sd{padding:11px 15px;background:var(--panel);font-size:11px;font-weight:700;letter-spacing:.03em;min-width:140px;display:flex;align-items:center;justify-content:flex-end;color:var(--muted)}
+
+/* ── POLL ── */
+.popt{width:100%;padding:12px 17px;border-radius:7px;border:1.5px solid var(--dim);background:var(--panel);color:var(--white);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;text-align:left;transition:border-color .18s,background .18s,transform .1s}
+.popt:hover{border-color:var(--sc);background:color-mix(in srgb,var(--sc) 6%,var(--panel));transform:translateX(4px)}
+.popt.v{border-color:var(--sc);background:color-mix(in srgb,var(--sc) 14%,var(--panel))}
+.popt:disabled{cursor:default;transform:none}
+.btr{flex:1;height:5px;background:var(--dim);border-radius:3px;overflow:hidden}
+.bfill{height:100%;width:0;border-radius:3px;transition:width .65s cubic-bezier(.22,1,.36,1)}
+
+/* ── CONCLUSION CARD ── */
+.cc{background:var(--card);border-radius:9px;padding:16px;border:1px solid var(--dim);display:flex;flex-direction:column;gap:7px}
+
+/* ── SOURCES ── */
+.scat{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ghost);margin-bottom:5px}
+.sitem{font-size:12px;color:var(--white);padding:4px 0;border-bottom:1px solid var(--dim)}
+.sitem a{color:var(--sc);text-decoration:none}.sitem a:hover{text-decoration:underline}
+
+/* ── CASE THREAD BADGE ── */
+.case-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 6px;border-radius:4px;background:var(--panel);border:1px solid var(--dim);font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.06em}
+.case-dot{width:7px;height:7px;border-radius:50%;background:var(--sc);flex-shrink:0}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<div id="deck">
+
+<!-- ══════════════════════════════
+  S0 · PORTADA
+══════════════════════════════ -->
+<section class="slide" id="s0" data-sc="#00C9A7" data-stage="">
+  <div></div>
+  <div style="display:flex;flex-direction:column;justify-content:center;gap:2.5vh">
+    <div class="a1" style="width:32px;height:2px;background:var(--d);border-radius:2px"></div>
+    <div class="a2">
+      <div class="bb fhuge tw">DESIGN</div>
+      <div class="bb fhuge" style="color:var(--d)">THINKING</div>
+    </div>
+    <div class="a3 case-badge" style="--sc:var(--d);margin-bottom:4px">
+      <span class="case-dot"></span>
+      CASO HILO: Rediseno de la app SUBE
+    </div>
+    <div class="a4" style="display:flex;gap:6px;flex-wrap:wrap">
+      <span class="pill" style="--sc:var(--e)">Empatiza</span>
+      <span class="pill" style="--sc:var(--d)">Define</span>
+      <span class="pill" style="--sc:var(--i)">Idea</span>
+      <span class="pill" style="--sc:var(--p)">Prototipa</span>
+      <span class="pill" style="--sc:var(--t)">Testea</span>
+    </div>
+    <div class="a5 card ghost" style="max-width:540px;padding:15px 19px;margin-top:1vh">
+      <div class="fsm tm fw7" style="letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px">Integrantes</div>
+      <div class="fsm tw" style="margin-bottom:8px">[ Lucas Waisbaum &nbsp;·&nbsp; Lucas Schniper &nbsp;·&nbsp; Ezequiel Zwiebel &nbsp;·&nbsp;]</div>
+      <div class="fsm tm fw7" style="letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px">Division</div>
+      <div class="fsm tw">[4A] &nbsp;·&nbsp; TIC Secundaria ORT Belgrano &nbsp;·&nbsp; 2026</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+  S1 · EL CASO: APP SUBE
+══════════════════════════════ -->
+<section class="slide" id="s1" data-sc="#00C9A7">
+  <div class="col" style="gap:5px;margin-bottom:16px">
+    <div class="a1 bb flg tw">El caso que vamos a resolver</div>
+    <div class="divl gr" style="width:50%"></div>
+  </div>
+  <div class="g2 fill" style="gap:16px;align-items:start">
+    <div class="col a2" style="gap:10px">
+      <div class="card" style="border-left:2px solid var(--e)">
+        <div class="fw7 tw fsm" style="margin-bottom:3px">El producto</div>
+        <div class="fsm tm">La app oficial de la tarjeta SUBE &mdash; usada por millones de personas en el transporte publico de Buenos Aires.</div>
+      </div>
+      <div class="card" style="border-left:2px solid var(--i)">
+        <div class="fw7 tw fsm" style="margin-bottom:3px">El problema</div>
+        <div class="fsm tm">Los usuarios no pueden cargar saldo facilmente, no saben cuanto les queda y se enteran cuando ya es tarde.</div>
+      </div>
+      <div class="card" style="border-left:2px solid var(--p)">
+        <div class="fw7 tw fsm" style="margin-bottom:3px">La pregunta</div>
+        <div class="fsm tw ital">&ldquo;¿Como podriamos redisenar la app para que nadie quede varado por saldo insuficiente?&rdquo;</div>
+      </div>
+    </div>
+    <div class="col a3">
+      <div class="card ghost" style="padding:20px">
+        <div class="fsm tm fw7" style="letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px">Dato real</div>
+        <div class="bb" style="font-size:clamp(40px,5.5vw,70px);color:var(--e);line-height:1">+12M</div>
+        <div class="fsm tm" style="margin-bottom:16px">tarjetas SUBE activas en Argentina</div>
+        <div class="bb" style="font-size:clamp(40px,5.5vw,70px);color:var(--i);line-height:1">65%</div>
+        <div class="fsm tm" style="margin-bottom:16px">de los usuarios no revisa saldo antes de viajar</div>
+        <div class="bb" style="font-size:clamp(40px,5.5vw,70px);color:var(--d);line-height:1">1 de 3</div>
+        <div class="fsm tm">viajeros quedo varado por saldo insuficiente en el ultimo mes</div>
+      </div>
+      <div class="a4 case-badge" style="--sc:var(--d);align-self:flex-start">
+        <span class="case-dot"></span>
+        Este caso va a atravesar las 5 etapas
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+  S2 · EMPATIZA — Mapa intro
+══════════════════════════════ -->
+<section class="slide" id="s2" data-sc="#FF6B35">
+  <div class="sbl ai">EMPATIZA</div>
+  <div class="col" style="gap:5px;margin-bottom:14px">
+    <div class="a1"><span class="pill" style="--sc:var(--e)">Empatiza</span></div>
+    <div class="tech-label a2">
+      <span class="tech-num" style="color:var(--e)">01</span>
+      <div class="bb flg tw">Mapa de Empatia</div>
+    </div>
+    <div class="divl gr" style="width:46%;--sc:var(--e)"></div>
+    <div class="a3 fsm tm ital">Antes de redisenar la app, hay que entender al usuario real. No los que imaginamos.</div>
+  </div>
+  <div class="g2 fill a4" style="gap:11px">
+    <div class="card" style="border:1px solid var(--e);display:flex;gap:11px">
+      <div style="width:2px;background:var(--e);border-radius:2px;flex-shrink:0"></div>
+      <div><div class="fw7 fsm" style="color:var(--e);margin-bottom:4px">¿Que PIENSA y SIENTE?</div><div class="fsm tm">Sus miedos, frustraciones y emociones profundas. Lo que no dice en voz alta.</div></div>
+    </div>
+    <div class="card" style="border:1px solid var(--e);display:flex;gap:11px">
+      <div style="width:2px;background:var(--e);border-radius:2px;flex-shrink:0"></div>
+      <div><div class="fw7 fsm" style="color:var(--e);margin-bottom:4px">¿Que VE?</div><div class="fsm tm">Su entorno fisico y digital, lo que observa al usar el transporte.</div></div>
+    </div>
+    <div class="card" style="border:1px solid var(--e);display:flex;gap:11px">
+      <div style="width:2px;background:var(--e);border-radius:2px;flex-shrink:0"></div>
+      <div><div class="fw7 fsm" style="color:var(--e);margin-bottom:4px">¿Que DICE y HACE?</div><div class="fsm tm">Comportamientos observables al usar la app y el transporte.</div></div>
+    </div>
+    <div class="card" style="border:1px solid var(--e);display:flex;gap:11px">
+      <div style="width:2px;background:var(--e);border-radius:2px;flex-shrink:0"></div>
+      <div><div class="fw7 fsm" style="color:var(--e);margin-bottom:4px">¿Que OYE?</div><div class="fsm tm">Lo que escucha de conocidos, redes sociales, y el entorno sobre la SUBE.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+  S3 · EMPATIZA — Mapa SUBE
+══════════════════════════════ -->
+<section class="slide" id="s3" data-sc="#FF6B35">
+  <div class="col" style="gap:5px;margin-bottom:12px">
+    <div class="a1"><span class="pill" style="--sc:var(--e)">Empatiza</span></div>
+    <div class="a2 bb flg tw">Mapa completado &mdash; Martin, 17 anos, estudiante</div>
+    <div class="a2 case-badge" style="--sc:var(--e);margin-top:2px"><span class="case-dot"></span>CASO SUBE</div>
+  </div>
+  <div class="g2 fill" style="gap:15px">
+    <div class="col a3" style="gap:7px">
+      <div class="ir" style="--sc:var(--e)"><div class="irt">PIENSA</div><div class="irb">Miedo a quedar parado frente al molinete con gente detras. Verguenza y apuro.</div></div>
+      <div class="ir" style="--sc:var(--e)"><div class="irt" style="background:var(--e)">VE</div><div class="irb">Carteles de &ldquo;recargue su SUBE&rdquo; en los colectivos que ya paso. Personas discutiendo en el acceso.</div></div>
+      <div class="ir" style="--sc:var(--e)"><div class="irt">DICE / HACE</div><div class="irb">&ldquo;Siempre me olvido de cargar&rdquo; &mdash; abre la app solo cuando ya es tarde.</div></div>
+      <div class="ir" style="--sc:var(--e)"><div class="irt">OYE</div><div class="irb">&ldquo;Use Mercado Pago que es mas facil&rdquo; / &ldquo;La app de SUBE no sirve para nada&rdquo;.</div></div>
+      <div class="expl a4">
+        <button class="exph" onclick="xp(this)"><span>¿Como construimos este mapa?</span><span class="expa">&#8964;</span></button>
+        <div class="expb">Usamos nuestra propia experiencia. A cada uno de nosotros por lo menos una vez nos paso de no poder viajar o retrasar mucho la fila del bondi por no tener saldo suficiente. Las citas son textuales.</div>
+        <button class="exph" onclick="xp(this)"><span>Recursos del metodo</span><span class="expa">&#8964;</span></button>
+        <div class="expb">IDEO Design Kit: <a href="https://designkit.org/methods/empathy-map" style="color:var(--e)">designkit.org/methods/empathy-map</a> &nbsp;&#183;&nbsp; NNGroup: <a href="https://www.nngroup.com/articles/empathy-mapping/" style="color:var(--e)">nngroup.com/articles/empathy-mapping</a></div>
+      </div>
+    </div>
+    <div class="a5 card solid fill" style="--sc:var(--e);display:flex;flex-direction:column;justify-content:center;gap:11px">
+      <div class="tag" style="background:rgba(0,0,0,.18);color:#0C0F18">Insight clave</div>
+      <div class="bb" style="font-size:clamp(22px,3vw,40px);color:#0C0F18;line-height:1.05">No es falta<br>de responsabilidad.</div>
+      <div class="bb" style="font-size:clamp(26px,3.5vw,48px);color:#0C0F18;line-height:1">Es que la app<br>no avisa.</div>
+      <p style="font-size:12px;color:rgba(0,0,0,.55);line-height:1.65">Martin no es descuidado. La app nunca le mando una alerta proactiva. Solo muestra el saldo cuando el usuario la abre &mdash; que es cuando ya es tarde.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+  S4 · DEFINE — POV
+══════════════════════════════ -->
+<section class="slide" id="s4" data-sc="#00C9A7">
+  <div class="sbl ai">DEFINE</div>
+  <div class="col" style="gap:5px;margin-bottom:13px">
+    <div class="a1"><span class="pill" style="--sc:var(--d)">Define</span></div>
+    <div class="tech-label a2">
+      <span class="tech-num" style="color:var(--d)">02</span>
+      <div class="bb flg tw">Punto de Vista (POV)</div>
+    </div>
+    <div class="divl gr" style="width:46%;--sc:var(--d)"></div>
+    <div class="a3 fsm tm ital">Transformar el insight en un enunciado exacto del problema a resolver.</div>
+  </div>
+  <div class="col fill" style="gap:11px">
+    <div class="a4 pov" style="--sc:var(--d)">
+      [ USUARIO ] &nbsp;&nbsp;&nbsp; necesita &nbsp;&nbsp;&nbsp; [ NECESIDAD ] &nbsp;&nbsp;&nbsp; porque &nbsp;&nbsp;&nbsp; [ INSIGHT ]
+    </div>
+    <div class="a5 card" style="border:2px solid var(--d);padding:18px 22px">
+      <div class="case-badge" style="--sc:var(--d);margin-bottom:12px"><span class="case-dot"></span>POV SUBE &mdash; version final</div>
+      <div style="font-size:clamp(14px,1.6vw,20px);font-weight:700;color:var(--d);line-height:1.5">
+        &ldquo;Martin, 17 anos, necesita <span style="color:var(--white)">saber cuando su saldo va a ser insuficiente</span> porque la app solo muestra informacion cuando el ya tomo la decision de viajar.&rdquo;
+      </div>
+    </div>
+    <div class="g3 a6" style="gap:10px">
+      <div class="card" style="border-top:2px solid var(--e)">
+        <div class="fw7 fsm" style="color:var(--e);margin-bottom:4px">USUARIO</div>
+        <div class="fsm tm">Martin, 17 anos, estudiante de CABA. Viaja en colectivo 5 dias a la semana.</div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--d)">
+        <div class="fw7 fsm ts" style="margin-bottom:4px">NECESIDAD</div>
+        <div class="fsm tm">Anticiparse al problema de saldo &mdash; no reaccionar cuando ya es tarde.</div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--p)">
+        <div class="fw7 fsm" style="color:var(--p);margin-bottom:4px">INSIGHT</div>
+        <div class="fsm tm">La app es reactiva, no proactiva. Informa pero no previene.</div>
+      </div>
+    </div>
+    <div class="expl" style="margin-top:2px">
+      <button class="exph" onclick="xp(this)"><span>¿Que se descarto antes de llegar a este POV?</span><span class="expa">&#8964;</span></button>
+      <div class="expb">Se descarton POVs sobre &ldquo;la app es lenta&rdquo; o &ldquo;el diseno es feo&rdquo;. El insight real, surgido de las entrevistas, era la falta de proactividad &mdash; no la estetica.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+  S5 · IDEA — Brainwriting
+══════════════════════════════ -->
+<section class="slide" id="s5" data-sc="#FFD60A">
+  <div class="sbl ai">IDEA</div>
+  <div class="col" style="gap:5px;margin-bottom:12px">
+    <div class="a1"><span class="pill" style="--sc:var(--i)">Idea</span></div>
+    <div class="tech-label a2">
+      <span class="tech-num" style="color:var(--i)">03</span>
+      <div class="bb flg tw">Brainwriting 6-3-5</div>
+    </div>
+    <div class="divl gr" style="width:44%;--sc:var(--i)"></div>
+    <div class="a3 case-badge" style="--sc:var(--i)"><span class="case-dot"></span>¿Como prevenimos que Martin quede varado?</div>
+  </div>
+  <div class="g3 fill a4" style="gap:11px">
+    <div class="card" style="border:1.5px solid var(--e);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:16px">
+      <div class="an bb" style="font-size:clamp(64px,9vw,112px);color:var(--e);line-height:1">6</div>
+      <div class="fw7 tw" style="font-size:11px;letter-spacing:.07em;text-transform:uppercase">Personas</div>
+      <div class="fsm tm">en el grupo</div>
+    </div>
+    <div class="card" style="border:1.5px solid var(--i);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:16px">
+      <div class="an bb" style="font-size:clamp(64px,9vw,112px);color:var(--i);line-height:1;animation-delay:.14s">3</div>
+      <div class="fw7 tw" style="font-size:11px;letter-spacing:.07em;text-transform:uppercase">Ideas</div>
+      <div class="fsm tm">por persona y ronda</div>
+    </div>
+    <div class="card" style="border:1.5px solid var(--d);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:16px">
+      <div class="an bb" style="font-size:clamp(64px,9vw,112px);color:var(--d);line-height:1;animation-delay:.28s">5</div>
+      <div class="fw7 tw" style="font-size:11px;letter-spacing:.07em;text-transform:uppercase">Rondas</div>
+      <div class="fsm tm">de 5 minutos</div>
+    </div>
+  </div>
+  <div class="a5 card solid" style="--sc:var(--i);text-align:center;padding:11px;margin-top:9px">
+    <span class="fw7 tb" style="font-size:13px">Hasta 108 ideas en 30 minutos</span>
+  </div>
+  <div class="expl a6" style="margin-top:8px">
+    <button class="exph" onclick="xp(this)"><span>Ideas que surgio el equipo para la app SUBE</span><span class="expa">&#8964;</span></button>
+    <div class="expb">Notificacion push cuando queda saldo para menos de 3 viajes &nbsp;&#183;&nbsp; Widget en pantalla de inicio &nbsp;&#183;&nbsp; Integracion con Google Maps para alertar antes de salir &nbsp;&#183;&nbsp; Recarga automatica al bajar del umbral &nbsp;&#183;&nbsp; Historial de viajes con prediccion de consumo</div>
+    <button class="exph" onclick="xp(this)"><span>¿Por que en silencio y no oral?</span><span class="expa">&#8964;</span></button>
+    <div class="expb">Elimina el groupthink: nadie sigue la idea del que habla mas fuerte. Incluye a personas introvertidas por igual. Genera mas ideas porque no hay tiempo de espera para hablar. Fuente: Bernd Rohrbach, 1969.</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+  S6 · PROTOTIPA — Papel
+══════════════════════════════ -->
+<section class="slide" id="s6" data-sc="#9B8FFF">
+  <div class="sbl ai">PROTOTIPA</div>
+  <div class="col" style="gap:5px;margin-bottom:12px">
+    <div class="a1"><span class="pill" style="--sc:var(--p)">Prototipa</span></div>
+    <div class="tech-label a2">
+      <span class="tech-num" style="color:var(--p)">04</span>
+      <div class="bb flg tw">Prototipo en Papel</div>
+    </div>
+    <div class="divl gr" style="width:43%;--sc:var(--p)"></div>
+    <div class="a3 case-badge" style="--sc:var(--p)"><span class="case-dot"></span>Antes de tocar una sola linea de codigo</div>
+  </div>
+  <div class="g2 fill" style="gap:15px">
+    <div class="col a4" style="gap:10px">
+      <div class="g3" style="gap:10px">
+        <div class="fid on" style="--sc:var(--p)"><div class="fw7 ts" style="font-size:17px">LO-FI</div><div class="fsm tm">Papel y lapiz</div><div class="fsm ts" style="margin-top:auto;font-weight:700">Minutos</div></div>
+        <div class="fid"><div class="fw7 tm" style="font-size:17px">MID-FI</div><div class="fsm tm">Figma basico</div><div class="fsm tm" style="margin-top:auto">Horas</div></div>
+        <div class="fid"><div class="fw7 tm" style="font-size:17px">HI-FI</div><div class="fsm tm">Interactivo</div><div class="fsm tm" style="margin-top:auto">Dias</div></div>
+      </div>
+      <div class="card" style="border:1px solid var(--p);padding:14px 17px">
+        <div class="fw7 tw fsm" style="margin-bottom:8px">Lo que prototipamos para SUBE</div>
+        <div class="col" style="gap:5px">
+          <div class="fsm tm" style="display:flex;gap:7px"><span style="color:var(--p);font-weight:700">01</span><span>Pantalla principal con widget de saldo prominente</span></div>
+          <div class="fsm tm" style="display:flex;gap:7px"><span style="color:var(--p);font-weight:700">02</span><span>Flujo de notificacion push &ldquo;te quedan 2 viajes&rdquo;</span></div>
+          <div class="fsm tm" style="display:flex;gap:7px"><span style="color:var(--p);font-weight:700">03</span><span>Pantalla de recarga rapida con un solo tap</span></div>
+        </div>
+      </div>
+      <div class="expl">
+        <button class="exph" onclick="xp(this)"><span>¿Por que papel antes que digital?</span><span class="expa">&#8964;</span></button>
+        <div class="expb">Si dedicamos semanas a construir en Figma y falla en el testeo, perdimos semanas. El papel nos obliga a simplificar: ¿que es lo minimo para probar esta idea? Eso es un MVP.</div>
+        <button class="exph" onclick="xp(this)"><span>Caso Kaiser Permanente</span><span class="expa">&#8964;</span></button>
+        <div class="expb">La organizacion de salud mas grande de EE.UU. rediseno su guardia de emergencias con prototipos en papel. Resultado: -30% en tiempos de espera sin invertir en tecnologia.</div>
+      </div>
+    </div>
+    <div class="a5 col" style="gap:10px">
+      <!-- Mockup de pantalla en papel -->
+      <div class="card ghost" style="flex:1;display:flex;flex-direction:column;gap:0;overflow:hidden;padding:0">
+        <div style="background:var(--p);padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+          <span class="fw7 tb" style="font-size:11px;letter-spacing:.06em;text-transform:uppercase">App SUBE &mdash; prototipo en papel</span>
+          <span class="fsm" style="color:rgba(0,0,0,.5)">boceto</span>
+        </div>
+        <!-- Simulated paper screen -->
+        <div style="background:#F5F0E8;flex:1;padding:16px;display:flex;flex-direction:column;gap:8px;font-family:'Inter',sans-serif">
+          <div style="font-size:10px;color:#777;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Mi SUBE</div>
+          <!-- Saldo card -->
+          <div style="background:white;border-radius:6px;padding:12px;border:1.5px solid #D0C8B8;text-align:center">
+            <div style="font-size:10px;color:#888;margin-bottom:2px">Saldo disponible</div>
+            <div style="font-size:28px;font-weight:900;color:#1A1A1A;line-height:1">$ 450</div>
+            <div style="font-size:10px;color:#E76F51;font-weight:700;margin-top:4px">&#9888; Solo 2 viajes disponibles</div>
+          </div>
+          <!-- Alert -->
+          <div style="background:#FFF3E0;border-radius:6px;padding:10px;border:1.5px dashed #FF9800;display:flex;gap:8px;align-items:flex-start">
+            <div style="font-size:16px;line-height:1">&#128276;</div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:#E65100">Recarga antes de las 7:30am</div>
+              <div style="font-size:9px;color:#888;margin-top:2px">Manana viajarias sin saldo suficiente</div>
+            </div>
+          </div>
+          <!-- CTA -->
+          <div style="background:#1A1A2E;border-radius:6px;padding:10px;text-align:center;margin-top:auto">
+            <div style="font-size:11px;font-weight:700;color:white">Recargar ahora</div>
+          </div>
+        </div>
+      </div>
+      <div class="quote" style="--sc:var(--p)"><span class="fsm ital tm">&ldquo;Fall in love with the problem, not the solution.&rdquo; &mdash; IDEO</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+  S7 · TESTEA — Usabilidad
+══════════════════════════════ -->
+<section class="slide" id="s7" data-sc="#34D399">
+  <div class="sbl ai">TESTEA</div>
+  <div class="col" style="gap:5px;margin-bottom:12px">
+    <div class="a1"><span class="pill" style="--sc:var(--t)">Testea</span></div>
+    <div class="tech-label a2">
+      <span class="tech-num" style="color:var(--t)">05</span>
+      <div class="bb flg tw">Test de Usabilidad</div>
+    </div>
+    <div class="divl gr" style="width:44%;--sc:var(--t)"></div>
+    <div class="a3 case-badge" style="--sc:var(--t)"><span class="case-dot"></span>Testeamos el prototipo SUBE con 5 estudiantes</div>
+  </div>
+  <div class="g2 fill" style="gap:15px">
+    <div class="col a4" style="gap:9px">
+      <div class="card solid fill" style="--sc:var(--t);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:18px">
+        <div class="an bb" style="font-size:clamp(80px,12vw,148px);color:#0C0F18;line-height:1">5</div>
+        <div class="fw7 tb" style="font-size:13px;max-width:200px;line-height:1.4">usuarios son suficientes para el 85% de los problemas</div>
+        <div style="font-size:10px;color:rgba(0,0,0,.45)">Jakob Nielsen, NNGroup (2000)</div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card a5" style="border-left:2px solid var(--e)"><div class="fw7 tw fsm" style="margin-bottom:3px">Moderador</div><div class="fsm tm">Guia las tareas sin ayudar. No responde preguntas.</div></div>
+      <div class="card a5" style="border-left:2px solid var(--i)"><div class="fw7 tw fsm" style="margin-bottom:3px">Observador</div><div class="fsm tm">Registra donde se detiene, que confunde, que expresiones hace.</div></div>
+      <div class="card a5" style="border-left:2px solid var(--t)"><div class="fw7 tw fsm" style="margin-bottom:3px">Usuario real</div><div class="fsm tm">Realiza tareas diciendo en voz alta que piensa (Think Aloud).</div></div>
+      <div class="card ghost a6" style="padding:0;overflow:hidden">
+        <div style="padding:8px 12px;background:var(--t)"><span class="fw7 tb" style="font-size:10px;letter-spacing:.06em;text-transform:uppercase">Resultados del test SUBE</span></div>
+        <table class="mx">
+          <thead><tr><th>Hallazgo</th><th>Freq.</th><th>Impacto</th></tr></thead>
+          <tbody>
+            <tr><td>No encontraron la alerta de saldo bajo</td><td>4/5</td><td style="color:#F87171">Critico</td></tr>
+            <tr><td>Recarga requiere demasiados pasos</td><td>4/5</td><td style="color:#F87171">Critico</td></tr>
+            <tr><td>Saldo no visible sin abrir la app</td><td>3/5</td><td style="color:var(--i)">Alto</td></tr>
+            <tr><td>Historial de viajes confuso</td><td>2/5</td><td style="color:var(--i)">Medio</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+  S8 · DINAMICA — Encuesta
+══════════════════════════════ -->
+<section class="slide" id="s8" data-sc="#00C9A7">
+  <div class="col" style="gap:5px;margin-bottom:16px">
+    <div class="a1"><span class="pill" style="--sc:var(--d)">Dinamica con el publico</span></div>
+    <div class="a2 bb flg tw">Sin haber leido sobre DT &mdash; ¿que hubieran hecho primero para mejorar la app SUBE?</div>
+    <div class="divl gr" style="width:60%;--sc:var(--d)"></div>
+    <div class="a3 fsm tm">Votar. Vemos los resultados del grupo y los comparamos con el proceso real.</div>
+  </div>
+  <div class="col fill a4" style="gap:8px;max-width:600px" id="popts">
+    <button class="popt" onclick="vote(0)">Redisenar la interfaz visualmente &mdash; hacerla mas linda</button>
+    <button class="popt" onclick="vote(1)">Agregar mas funciones &mdash; historial, estadisticas, etc.</button>
+    <button class="popt" onclick="vote(2)">Hablar con usuarios para entender que les pasa</button>
+    <button class="popt" onclick="vote(3)">Arreglar los bugs tecnicos de la app</button>
+  </div>
+  <div id="pres" style="display:none;flex-direction:column;gap:8px;margin-top:12px;max-width:600px">
+    <div id="pri"></div>
+    <div class="card ghost" style="padding:12px 15px;margin-top:4px">
+      <div class="fw7 tw fsm" style="margin-bottom:4px">Lo que hicimos nosotros (la respuesta correcta)</div>
+      <div class="fsm tm">Empezar por hablar con usuarios (Mapa de Empatia) revelo que el problema no era estetico ni tecnico &mdash; era que la app no avisaba. Sin ese paso, cualquier solucion hubiera fallado.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+  S9 · RESUMEN
+══════════════════════════════ -->
+<section class="slide" id="s9" data-sc="#00C9A7">
+  <div class="col" style="gap:5px;margin-bottom:14px">
+    <div class="a1 bb flg tw">Las 5 Tecnicas &mdash; aplicadas al caso SUBE</div>
+    <div class="divl gr" style="width:54%;--sc:var(--d)"></div>
+  </div>
+  <div class="col fill" style="gap:7px">
+    <div class="sr a2">
+      <div class="ss" style="background:var(--e)">Empatiza</div>
+      <div class="st">Mapa de Empatia</div>
+      <div class="sd" style="color:var(--e)">Martin no es descuidado &mdash; la app no avisa</div>
+    </div>
+    <div class="sr a3">
+      <div class="ss" style="background:var(--d)">Define</div>
+      <div class="st">POV Statement</div>
+      <div class="sd" style="color:var(--d)">La app es reactiva, no proactiva</div>
+    </div>
+    <div class="sr a4">
+      <div class="ss" style="background:var(--i)">Idea</div>
+      <div class="st">Brainwriting 6-3-5</div>
+      <div class="sd" style="color:var(--i)">Notificacion predictiva antes de salir</div>
+    </div>
+    <div class="sr a5">
+      <div class="ss" style="background:var(--p)">Prototipa</div>
+      <div class="st">Prototipo en Papel</div>
+      <div class="sd" style="color:var(--p)">Widget + alerta + recarga en 1 tap</div>
+    </div>
+    <div class="sr a6">
+      <div class="ss" style="background:var(--t)">Testea</div>
+      <div class="st">Test de Usabilidad</div>
+      <div class="sd" style="color:var(--t)">4/5 no encontraron la alerta &rarr; redisenar</div>
+    </div>
+  </div>
+  <div class="a6 quote" style="margin-top:12px;--sc:var(--d)">
+    <span class="fsm ital tm">El insight &ldquo;la app no avisa&rdquo; surgio de hablar con usuarios, no de suponer. Sin Empatiza, las otras 4 etapas hubieran resuelto el problema equivocado.</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+  S10 · CONCLUSION
+══════════════════════════════ -->
+<section class="slide" id="s10" data-sc="#00C9A7">
+  <div class="col" style="gap:5px;margin-bottom:14px">
+    <div class="a1 bb flg tw">Conclusion del Grupo</div>
+    <div class="divl gr" style="width:40%;--sc:var(--d)"></div>
+  </div>
+  <div class="g2 fill" style="gap:11px">
+    <div class="cc a2" style="border-top:2px solid var(--e)">
+      <div class="fw7 tw fsm">El proceso es iterativo</div>
+      <div class="fsm tm">Cuando el test de SUBE mostro que la alerta no se encontraba, volvimos a prototipar. No es falla &mdash; es el metodo.</div>
+    </div>
+    <div class="cc a3" style="border-top:2px solid var(--d)">
+      <div class="fw7 tw fsm">Empezar por las personas</div>
+      <div class="fsm tm">Todos asumimos que SUBE tenia un problema de diseno. Las entrevistas revelaron que era un problema de comportamiento de la app.</div>
+    </div>
+    <div class="cc a4" style="border-top:2px solid var(--i)">
+      <div class="fw7 tw fsm">Fallar rapido es ganar</div>
+      <div class="fsm tm">El prototipo en papel mostro los problemas criticos en 30 minutos. Si hubieramos desarrollado la app completa, los hubieramos descubierto meses despues.</div>
+    </div>
+    <div class="cc a5" style="border-top:2px solid var(--t)">
+      <div class="fw7 tw fsm">Escalar a cualquier problema</div>
+      <div class="fsm tm">Usamos SUBE como caso, pero el mismo proceso aplica a cualquier app, servicio o problema humano complejo.</div>
+    </div>
+  </div>
+  <div class="a6 quote" style="margin-top:11px;--sc:var(--d)">
+    <span class="fsm ital tm">&ldquo;El DT no es una formula magica &mdash; es una actitud ante los problemas.&rdquo;</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+  S11 · FUENTES
+══════════════════════════════ -->
+<section class="slide" id="s11" data-sc="#00C9A7">
+  <div class="col" style="gap:5px;margin-bottom:14px">
+    <div class="a1 bb flg tw">Fuentes y Recursos</div>
+    <div class="divl gr" style="width:36%;--sc:var(--d)"></div>
+  </div>
+  <div class="g2 fill ai" style="gap:24px;align-content:start">
+    <div>
+      <div class="scat">Institucional</div>
+      <div class="sitem"><a href="https://campus.ort.edu.ar/secundaria/belgrano/tic/articulo/1284634">campus.ort.edu.ar &mdash; Conociendo el Design Thinking</a></div>
+      <div class="scat" style="margin-top:13px">Sitios</div>
+      <div class="sitem"><a href="https://designthinking.es/tecnicas-de-innovacion/">designthinking.es/tecnicas-de-innovacion</a></div>
+      <div class="sitem"><a href="https://dschool.stanford.edu">dschool.stanford.edu &mdash; Stanford d.school</a></div>
+      <div class="sitem"><a href="https://designkit.org">designkit.org &mdash; IDEO Design Kit</a></div>
+      <div class="sitem"><a href="https://www.nngroup.com">nngroup.com &mdash; Nielsen Norman Group</a></div>
+      <div class="sitem"><a href="https://www.interaction-design.org">interaction-design.org</a></div>
+    </div>
+    <div>
+      <div class="scat">Libros</div>
+      <div class="sitem">Tim Brown &mdash; <em>Change by Design</em> (IDEO, 2009)</div>
+      <div class="sitem">Jake Knapp &mdash; <em>Sprint</em> (Google Ventures, 2016)</div>
+      <div class="sitem">Steve Krug &mdash; <em>Don&rsquo;t Make Me Think</em> (2014)</div>
+      <div class="scat" style="margin-top:13px">Videos</div>
+      <div class="sitem"><a href="https://www.youtube.com/results?search_query=IDEO+design+thinking+full+process">Design Thinking Full Process &mdash; IDEO</a></div>
+      <div class="sitem"><a href="https://www.youtube.com/@designthinkingenespanol7962">Brainwriting 6-3-5 &mdash; DT en Espanol</a></div>
+      <div class="sitem"><a href="https://www.nngroup.com/articles/why-you-only-need-to-test-with-5-users/">Why test with 5 users &mdash; NNGroup</a></div>
+    </div>
+  </div>
+</section>
+
+</div><!-- #deck -->
+
+<div id="nav">
+  <button onclick="go(cur-1)">&#8592;</button>
+  <div class="dots" id="dots"></div>
+  <div id="sn">1 / 12</div>
+  <button onclick="go(cur+1)">&#8594;</button>
+  <button onclick="toggleFS()" style="font-size:11px;opacity:.45">&#9645;</button>
+</div>
+
+<script>
+const TOTAL=12,slides=document.querySelectorAll('.slide'),dotsEl=document.getElementById('dots'),sn=document.getElementById('sn'),prog=document.getElementById('prog');
+let cur=0;
+for(let i=0;i<TOTAL;i++){const d=document.createElement('div');d.className='dot';d.onclick=()=>go(i);dotsEl.appendChild(d);}
+const SC=['#00C9A7','#00C9A7','#FF6B35','#FF6B35','#00C9A7','#FFD60A','#9B8FFF','#34D399','#00C9A7','#00C9A7','#00C9A7','#00C9A7'];
+function go(n){
+  slides[cur].classList.remove('active');
+  cur=Math.max(0,Math.min(TOTAL-1,n));
+  slides[cur].classList.add('active');
+  sn.textContent=(cur+1)+' / '+TOTAL;
+  const c=SC[cur];
+  prog.style.width=((cur+1)/TOTAL*100)+'%';
+  prog.style.background=c;
+  document.querySelectorAll('.dot').forEach((d,i)=>{d.classList.toggle('on',i===cur);d.style.background=i===cur?c:'';});
+}
+function toggleFS(){if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});else document.exitFullscreen();}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();go(cur+1);}if(e.key==='ArrowLeft'){e.preventDefault();go(cur-1);}if(e.key==='f')toggleFS();});
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;},{passive:true});
+document.addEventListener('touchend',e=>{const dx=tx-e.changedTouches[0].clientX;if(Math.abs(dx)>50)go(cur+(dx>0?1:-1));});
+function xp(btn){
+  const body=btn.nextElementSibling;
+  const open=body.classList.contains('on');
+  btn.closest('.expl').querySelectorAll('.expb').forEach(b=>b.classList.remove('on'));
+  btn.closest('.expl').querySelectorAll('.exph').forEach(b=>b.classList.remove('on'));
+  if(!open){body.classList.add('on');btn.classList.add('on');}
+}
+const PL=["Redisenar visualmente","Agregar funciones","Hablar con usuarios","Arreglar bugs"],PC=['#FF6B35','#FFD60A','#00C9A7','#9B8FFF'];
+const votes=[0,0,0,0];let voted=false;
+function vote(i){
+  if(voted)return;voted=true;
+  votes[i]+=5;[0,1,2,3].filter(x=>x!==i).forEach((o,j)=>{votes[o]+=[3,2,1][j]||0;});
+  document.querySelectorAll('.popt').forEach((b,j)=>{b.classList.toggle('v',j===i);b.disabled=true;});
+  const total=votes.reduce((a,b)=>a+b,0);
+  const res=document.getElementById('pres'),inner=document.getElementById('pri');
+  inner.innerHTML=votes.map((v,j)=>`
+    <div style="margin-bottom:7px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="font-size:12px;color:var(--white)">${PL[j]}</span>
+        <span style="font-size:12px;font-weight:700;color:${PC[j]}">${Math.round(v/total*100)}%</span>
+      </div>
+      <div class="btr"><div class="bfill" id="bf${j}" style="background:${j===i?'var(--d)':'var(--dim)'}"></div></div>
+    </div>`).join('');
+  res.style.display='flex';
+  setTimeout(()=>{votes.forEach((v,j)=>{const el=document.getElementById('bf'+j);if(el)el.style.width=Math.round(v/total*100)+'%';});},80);
+}
+go(0);
+</script>
+</body>
+</html>
